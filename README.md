@@ -1,0 +1,2 @@
+# MyCoin
+ Blockchain project - MyCoin
