@@ -1,0 +1,24 @@
+{
+  "name": "mycoin",
+  "version": "1.0.0",
+  "description": "Blockchain project - MyCoin",
+  "main": "index.js",
+  "dependencies": {
+    "elliptic": "^6.5.4",
+    "crypto-js": "^4.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tukienhoa/MyCoin.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tukienhoa/MyCoin/issues"
+  },
+  "homepage": "https://github.com/tukienhoa/MyCoin#readme"
+}
