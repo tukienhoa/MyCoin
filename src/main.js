@@ -7,13 +7,19 @@ const myWalletAddress = myKey.getPublic('hex');
 
 let myCoin = new Blockchain();
 
+console.log('Mining...');
+myCoin.minePendingTransactions(myWalletAddress);
+console.log('Done mining!');
+
 const tx1 = new Transaction(myWalletAddress, 'public key goes here', 10);
 tx1.signTransaction(myKey);
 myCoin.addTransaction(tx1);
 
-console.log('\n Starting the miner...');
+console.log('Mining...');
 myCoin.minePendingTransactions(myWalletAddress);
+console.log('Done mining!');
 
-console.log('\nBalance of me is: ', myCoin.getBalanceOfAddress(myWalletAddress));
+console.log('My balance: ', myCoin.getBalanceOfAddress(myWalletAddress));
 
-console.log('Is chain valid?', myCoin.isChainValid());
+console.log('Transaction History');
+console.log(JSON.stringify(myCoin.getAllTransactions(), null, 4));

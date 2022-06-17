@@ -1,4 +1,4 @@
-const SHA256 = require('crypto-js/sha256');
+const crypto = require('crypto');
 const EC = require('elliptic').ec;
 const ec = new EC('secp256k1');
 
@@ -11,7 +11,7 @@ class Transaction {
     }
 
     calculateHash() {
-        return SHA256(this.fromAddress + this.toAddress + this.amount).toString();
+        return crypto.createHash('sha256').update(this.fromAddress + this.toAddress + this.amount + this.timestamp).digest('hex');
     }
 
     signTransaction(signingKey) {
@@ -46,7 +46,7 @@ class Block {
     }
 
     calculateHash() {
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce).toString();
+        return crypto.createHash('sha256').update(this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce).digest('hex');
     }
 
     mineBlock(difficulty) {
@@ -54,7 +54,7 @@ class Block {
             this.nonce++;
             this.hash = this.calculateHash();
         }
-        console.log("Block mined: " + this.hash);
+        
     }
 
     hasValidTransactions() { 
@@ -91,7 +91,6 @@ class Blockchain {
         let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
         block.mineBlock(this.difficulty);
 
-        console.log("Block successfully mined!");
         this.chain.push(block);
 
         this.pendingTransactions = [];
@@ -104,6 +103,32 @@ class Blockchain {
 
         if (!transaction.isValid()) {
             throw new Error('Cannot add invalid transaction to chain');
+        }
+
+        if (transaction.amount <= 0) {
+            throw new Error('Transaction amount should be higher than 0');
+        }
+
+        // Make sure that the amount sent is not greater than existing balance
+        const walletBalance = this.getBalanceOfAddress(transaction.fromAddress);
+        if (walletBalance < transaction.amount) {
+            throw new Error('Not enough balance');
+        }
+
+        // Get all other pending transactions for the "from" wallet
+        const pendingTxForWallet = this.pendingTransactions.filter(tx => tx.fromAddress === transaction.fromAddress);
+
+        // If the wallet has pending transactions, calculate the total amount
+        // of spend coins so far. If this exceeds the balance, refuse to add this transaction.
+        if (pendingTxForWallet.length > 0) {
+            const totalPendingAmount = pendingTxForWallet
+                .map(tx => tx.amount)
+                .reduce((prev, curr) => prev + curr);
+
+            const totalAmount = totalPendingAmount + transaction.amount;
+            if (totalAmount > walletBalance) {
+                throw new Error('Pending transactions for this wallet is higher than its balance.');
+            }
         }
 
         this.pendingTransactions.push(transaction);
@@ -127,7 +152,25 @@ class Blockchain {
         return balance;
     }
 
+    getAllTransactions() {
+        let transactions = [];
+
+        for (const block of this.chain) {
+            for (const tx of block.transactions) {
+                transactions.push(tx);
+            }
+        }
+
+        return transactions;
+    }
+
     isChainValid() {
+        const realGenesis = JSON.stringify(this.createGenesisBlock());
+
+        if (realGenesis !== JSON.stringify(this.chain[0])) {
+            return false;
+        }
+
         for (let i = 1; i < this.chain.length; i++) {
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
